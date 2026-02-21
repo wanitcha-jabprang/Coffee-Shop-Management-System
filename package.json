@@ -1,0 +1,24 @@
+{
+  "name": "coffee-shop-management-system",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "install-all": "cd coffee_shop/backend && npm install && cd ../frontend && npm install",
+    "start": "concurrently \"cd coffee_shop/backend && node server.js\" \"cd coffee_shop/frontend && npm start\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/wanitcha-jabprang/Coffee-Shop-Management-System/issues"
+  },
+  "homepage": "https://github.com/wanitcha-jabprang/Coffee-Shop-Management-System#readme",
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  },
+  "dependencies": {
+    "express": "^5.2.1"
+  }
+}
