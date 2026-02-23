@@ -1,4 +1,13 @@
 {
+<<<<<<< HEAD
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  },
+  "dependencies": {
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "pg": "^8.18.0"
+=======
   "name": "coffee-shop-management-system",
   "version": "1.0.0",
   "description": "",
@@ -20,5 +29,6 @@
   },
   "dependencies": {
     "express": "^5.2.1"
+>>>>>>> main
   }
 }

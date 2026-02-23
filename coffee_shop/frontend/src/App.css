@@ -1,0 +1,9 @@
+.container { text-align: center; padding: 20px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+h1 { color: #4a3b32; }
+.menu-grid { display: flex; gap: 20px; justify-content: center; flex-wrap: wrap; margin-top: 30px; }
+.card { background: white; padding: 20px; border-radius: 12px; width: 220px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); border: 1px solid #eee; }
+.card h2 { margin-top: 0; color: #333; }
+.desc { color: #777; font-size: 14px; min-height: 40px; }
+.price { color: #d35400; font-size: 24px; font-weight: bold; margin: 15px 0; }
+button { background-color: #4a3b32; color: white; border: none; padding: 12px; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; transition: 0.3s; }
+button:hover { background-color: #6d584a; }
