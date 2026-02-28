@@ -1,13 +1,4 @@
 {
-<<<<<<< HEAD
-  "devDependencies": {
-    "nodemon": "^3.1.14"
-  },
-  "dependencies": {
-    "cors": "^2.8.6",
-    "express": "^5.2.1",
-    "pg": "^8.18.0"
-=======
   "name": "coffee-shop-management-system",
   "version": "1.0.0",
   "description": "",
@@ -24,11 +15,15 @@
     "url": "https://github.com/wanitcha-jabprang/Coffee-Shop-Management-System/issues"
   },
   "homepage": "https://github.com/wanitcha-jabprang/Coffee-Shop-Management-System#readme",
-  "devDependencies": {
-    "concurrently": "^9.2.1"
-  },
   "dependencies": {
-    "express": "^5.2.1"
->>>>>>> main
+    "bcrypt": "^6.0.0",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "pg": "^8.18.0",
+    "recharts": "^3.7.0"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "nodemon": "^3.1.14"
   }
 }
