@@ -464,6 +464,70 @@ app.post('/api/orders/checkout', async (req, res) => {
   }
 });
 
+// ==========================================
+// 14. API: ชำระเงิน 
+// ==========================================
+app.post('/api/orders/checkout', async (req, res) => {
+    const { order_id, customer_id, total_amount, payment_method, transaction_ref } = req.body;
+
+    const client = await pool.connect();
+    try {
+        await client.query('BEGIN');
+
+        // 1. บันทึกข้อมูลการชำระเงิน (แก้ไขชื่อคอลัมน์ให้ตรงกับรูปภาพเป๊ะๆ)
+        const paymentResult = await client.query(
+            `INSERT INTO payments (
+                order_id, 
+                payment_method, 
+                amount, 
+                payment_status, -- แก้จาก status เป็น payment_status ตามรูป
+                transaction_ref, 
+                paid_at         -- เพิ่มคอลัมน์ paid_at ตามรูป
+            ) VALUES ($1, $2, $3, 'success', $4, NOW()) RETURNING payment_id`, 
+            [order_id, payment_method, total_amount, transaction_ref]
+        );
+
+        // 2. อัปเดตสถานะออเดอร์ (ตาม Business Rule ข้อ 6)
+        await client.query(
+            "UPDATE orders SET status = 'paid' WHERE order_id = $1",
+            [order_id]
+        );
+
+        // 3. คำนวณแต้มสะสม (ตาม Business Rule ข้อ 1-2)
+        let earnedPoints = 0;
+        if (customer_id) {
+            earnedPoints = Math.floor(total_amount / 50);
+            if (earnedPoints > 0) {
+                await client.query(
+                    "UPDATE customers SET total_points = total_points + $1 WHERE customer_id = $2",
+                    [earnedPoints, customer_id]
+                );
+                await client.query(
+                    "INSERT INTO points_logs (customer_id, order_id, action, points_amount) VALUES ($1, $2, 'EARN', $3)",
+                    [customer_id, order_id, earnedPoints]
+                );
+            }
+        }
+
+        await client.query('COMMIT');
+        
+        // 4. พิมพ์ใบเสร็จ (ตามมาตรฐาน FR-HW-01)
+        console.log(`[Printer] Printing receipt for Order: ${order_id}`);
+
+        res.status(200).json({ 
+            success: true, 
+            message: '✅ ชำระเงินและบันทึกแต้มสำเร็จ!',
+            payment_id: paymentResult.rows[0].payment_id 
+        });
+
+    } catch (err) {
+        await client.query('ROLLBACK');
+        console.error('Checkout Error:', err.message);
+        res.status(500).json({ error: 'การชำระเงินล้มเหลว ข้อมูลถูก Rollback' });
+    } finally {
+        client.release();
+    }
+});
 // เส้นทางหน้าแรก
 app.get('/', (req, res) => {
   res.send('Backend is running with PostgreSQL! ☕');
