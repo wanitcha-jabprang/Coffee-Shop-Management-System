@@ -128,31 +128,53 @@ function App({ loggedInCustomer, onUpdatePoints }) {
             gap: '15px',
             marginTop: '15px'
           }}>
-            {products.map(product => (
-              <div key={product.product_id} style={{ 
-                border: '1px solid #ddd', 
-                borderRadius: '12px', 
-                padding: '10px', 
-                textAlign: 'center', 
-                backgroundColor: 'white',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.05)'
-              }}>
-                <h3 style={{ fontSize: '16px', margin: '5px 0' }}>{product.name}</h3>
-                <p style={{ color: '#E67E22', fontWeight: 'bold', fontSize: '18px', margin: '5px 0' }}>
-                  ฿{parseFloat(product.price).toFixed(2)}
-                </p>
-                <button onClick={() => handleProductClick(product)} style={{ 
-                  width: '100%', 
-                  padding: '8px', 
-                  backgroundColor: '#4A3B32', 
-                  color: 'white', 
-                  border: 'none', 
-                  borderRadius: '6px',
-                  cursor: 'pointer',
-                  fontSize: '14px'
-                }}>สั่งซื้อ</button>
-              </div>
-            ))}
+            {products.map(product => {
+              // 🌟 จุดสำคัญ: ระบบรูปภาพสำรอง
+              const fallbackImage = 'https://images.unsplash.com/photo-1497935586351-b67a49e012bf?w=400';
+              const imageUrl = product.image_url ? product.image_url : fallbackImage;
+
+              return (
+                <div key={product.product_id} style={{ 
+                  border: '1px solid #ddd', 
+                  borderRadius: '12px', 
+                  padding: '10px', 
+                  textAlign: 'center', 
+                  backgroundColor: 'white',
+                  boxShadow: '0 2px 5px rgba(0,0,0,0.05)',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between'
+                }}>
+                  
+                  {/* แสดงรูปภาพตรงนี้ 👇 */}
+                  <img 
+                    src={imageUrl} 
+                    alt={product.name} 
+                    style={{ width: '100%', height: '120px', objectFit: 'cover', borderRadius: '8px', marginBottom: '10px', backgroundColor: '#f5f5f5' }} 
+                    onError={(e) => { e.target.src = fallbackImage; }} 
+                  />
+
+                  <div>
+                    <h3 style={{ fontSize: '16px', margin: '5px 0' }}>{product.name}</h3>
+                    <p style={{ color: '#E67E22', fontWeight: 'bold', fontSize: '18px', margin: '5px 0' }}>
+                      ฿{parseFloat(product.price).toFixed(2)}
+                    </p>
+                  </div>
+                  
+                  <button onClick={() => handleProductClick(product)} style={{ 
+                    width: '100%', 
+                    padding: '8px', 
+                    backgroundColor: '#4A3B32', 
+                    color: 'white', 
+                    border: 'none', 
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    marginTop: '10px'
+                  }}>สั่งซื้อ</button>
+                </div>
+              );
+            })}
           </div>
         </div>
 
@@ -178,9 +200,9 @@ function App({ loggedInCustomer, onUpdatePoints }) {
               <div>
                 <div style={{ maxHeight: '300px', overflowY: 'auto' }}>
                   {cart.map((item, index) => (
-                    <div key={index} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '10px', borderBottom: '1px dashed #eee', paddingBottom: '5px' }}>
-                      <span>{item.name} (x{item.quantity})</span>
-                      <button onClick={() => removeFromCart(index)} style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}>ลบ</button>
+                    <div key={index} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '14px', marginBottom: '10px', borderBottom: '1px dashed #eee', paddingBottom: '10px', alignItems: 'center' }}>
+                      <span style={{ flex: 1 }}>{item.name} <br/><span style={{ color: '#777', fontSize: '12px' }}>(x{item.quantity})</span></span>
+                      <button onClick={() => removeFromCart(index)} style={{ color: '#e74c3c', border: '1px solid #e74c3c', background: 'white', cursor: 'pointer', borderRadius: '4px', padding: '4px 8px', marginLeft: '10px' }}>ลบ</button>
                     </div>
                   ))}
                 </div>
@@ -224,16 +246,18 @@ function App({ loggedInCustomer, onUpdatePoints }) {
       {selectedProduct && (
         <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', backgroundColor: 'rgba(0,0,0,0.7)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000, padding: '20px' }}>
           <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '15px', width: '100%', maxWidth: '350px' }}>
-            <h3 style={{ textAlign: 'center' }}>ระดับความหวาน</h3>
+            <h3 style={{ textAlign: 'center', color: '#4A3B32', marginTop: 0 }}>เลือกระดับความหวาน</h3>
+            <p style={{ textAlign: 'center', fontWeight: 'bold', color: '#E67E22' }}>{selectedProduct.name}</p>
             <div style={{ margin: '20px 0' }}>
               {['0%', '50%', '100%'].map(level => (
-                <label key={level} style={{ display: 'block', padding: '10px', border: '1px solid #eee', marginBottom: '5px', borderRadius: '8px' }}>
-                  <input type="radio" value={level} checked={sweetness === level} onChange={(e) => setSweetness(e.target.value)} /> {level}
+                <label key={level} style={{ display: 'block', padding: '10px', border: '1px solid #eee', marginBottom: '5px', borderRadius: '8px', cursor: 'pointer', backgroundColor: sweetness === level ? '#fdf2e9' : 'white' }}>
+                  <input type="radio" value={level} checked={sweetness === level} onChange={(e) => setSweetness(e.target.value)} style={{ marginRight: '10px' }} /> 
+                  หวาน {level}
                 </label>
               ))}
             </div>
-            <button onClick={handleAddToCart} style={{ width: '100%', padding: '12px', backgroundColor: '#E67E22', color: 'white', border: 'none', borderRadius: '8px', marginBottom: '10px' }}>เพิ่มลงตะกร้า</button>
-            <button onClick={() => setSelectedProduct(null)} style={{ width: '100%', background: 'none', border: 'none', color: '#666' }}>ยกเลิก</button>
+            <button onClick={handleAddToCart} style={{ width: '100%', padding: '12px', backgroundColor: '#E67E22', color: 'white', border: 'none', borderRadius: '8px', marginBottom: '10px', fontSize: '16px', fontWeight: 'bold', cursor: 'pointer' }}>เพิ่มลงตะกร้า</button>
+            <button onClick={() => setSelectedProduct(null)} style={{ width: '100%', background: 'none', border: 'none', color: '#999', cursor: 'pointer', padding: '10px' }}>ยกเลิก</button>
           </div>
         </div>
       )}

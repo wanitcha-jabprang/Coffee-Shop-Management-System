@@ -1,219 +1,320 @@
 import { useState, useEffect } from 'react';
-// 🌟 1. นำเข้า Recharts สำหรับวาดกราฟ
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
 
 function AdminDashboard({ user }) {
   const [activeTab, setActiveTab] = useState('menu'); 
   
+  // ☕ States: จัดการเมนู
   const [products, setProducts] = useState([]);
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
   const [description, setDescription] = useState('');
   const [imageUrl, setImageUrl] = useState('');
 
+  // 📦 States: สต็อก
   const [inventory, setInventory] = useState([]);
-  
+
+  // 📖 States: จัดการสูตรชง
+  const [recipes, setRecipes] = useState([]);
+  const [selectedProductId, setSelectedProductId] = useState('');
+  const [selectedIngredientId, setSelectedIngredientId] = useState('');
+  const [quantityUsed, setQuantityUsed] = useState('');
+
+  // 📈 States: รายงานยอดขาย
   const [salesReport, setSalesReport] = useState({ summary: {}, topProducts: [] });
 
-  const fetchProducts = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/api/products');
-      setProducts(await response.json());
-    } catch (error) { console.error(error); }
-  };
+  // 👥 States: พนักงาน
+  const [employees, setEmployees] = useState([]);
+  const [empName, setEmpName] = useState('');
+  const [empRole, setEmpRole] = useState('barista');
+  const [empEmail, setEmpEmail] = useState('');
+  const [empPassword, setEmpPassword] = useState('');
 
+  // ==========================================
+  // 📥 ฟังก์ชัน Fetch ข้อมูลทั้งหมด
+  // ==========================================
+  const fetchProducts = async () => {
+    try { const res = await fetch('http://localhost:3000/api/products'); setProducts(await res.json()); } catch (err) { console.error(err); }
+  };
+  
   const fetchInventory = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/api/inventory');
-      setInventory(await response.json());
-    } catch (error) { console.error(error); }
+    try { const res = await fetch('http://localhost:3000/api/inventory'); setInventory(await res.json()); } catch (err) { console.error(err); }
   };
 
   const fetchSalesReport = async () => {
-    try {
-      const response = await fetch('http://localhost:3000/api/reports/sales');
-      const data = await response.json();
-      if (data.success) {
-        setSalesReport(data);
-      }
-    } catch (error) { console.error(error); }
+    try { const res = await fetch('http://localhost:3000/api/reports/sales'); const data = await res.json(); if (data.success) setSalesReport(data); } catch (err) { console.error(err); }
+  };
+
+  const fetchRecipes = async (productId) => {
+    if (!productId) { setRecipes([]); return; }
+    try { const res = await fetch(`http://localhost:3000/api/recipes/${productId}`); setRecipes(await res.json()); } catch (err) { console.error(err); }
+  };
+
+  const fetchEmployees = async () => {
+    try { const res = await fetch('http://localhost:3000/api/employees'); setEmployees(await res.json()); } catch (err) { console.error(err); }
   };
 
   useEffect(() => {
     fetchProducts();
     fetchInventory();
     fetchSalesReport();
+    fetchEmployees();
   }, []);
 
+  useEffect(() => { 
+    fetchRecipes(selectedProductId); 
+  }, [selectedProductId]);
+
+  // ==========================================
+  // 📝 ฟังก์ชันจัดการข้อมูล (เพิ่ม/ลบ)
+  // ==========================================
+  
+  // -- เมนู --
   const handleAddProduct = async (e) => { 
     e.preventDefault(); 
     try { 
-      const response = await fetch('http://localhost:3000/api/products', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
+      const res = await fetch('http://localhost:3000/api/products', { 
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, 
         body: JSON.stringify({ name, price, description, image_url: imageUrl }) 
       }); 
-      if ((await response.json()).success) { 
-        alert('✅ เพิ่มเมนูสำเร็จ'); 
-        setName(''); setPrice(''); setDescription(''); setImageUrl(''); 
-        fetchProducts(); 
-      } 
-    } catch (error) { console.error(error); } 
+      if ((await res.json()).success) { alert('✅ เพิ่มเมนูสำเร็จ'); setName(''); setPrice(''); setDescription(''); setImageUrl(''); fetchProducts(); } 
+    } catch (err) { console.error(err); } 
   };
 
-  const handleDelete = async (id, productName) => { 
+  const handleDeleteProduct = async (id, productName) => { 
     if (!window.confirm(`⚠️ ลบเมนู ${productName}?`)) return; 
-    try { 
-      const response = await fetch(`http://localhost:3000/api/products/${id}`, { method: 'DELETE' }); 
-      if ((await response.json()).success) { 
-        alert('🗑️ ลบสำเร็จ'); 
-        fetchProducts(); 
-      } 
-    } catch (error) { console.error(error); } 
+    try { const res = await fetch(`http://localhost:3000/api/products/${id}`, { method: 'DELETE' }); if ((await res.json()).success) { alert('🗑️ ลบเมนูสำเร็จ'); fetchProducts(); if (selectedProductId === id) setSelectedProductId(''); } } catch (err) { console.error(err); } 
   };
 
+  // -- สต็อก --
   const handleRefill = async (ingredient) => { 
     const qtyStr = window.prompt(`📦 ระบุจำนวนที่ต้องการเติมให้ "${ingredient.name}":`); 
     if (!qtyStr) return; 
-    const quantity = parseFloat(qtyStr); 
-    if (isNaN(quantity) || quantity <= 0) { alert('❌ ตัวเลขไม่ถูกต้อง'); return; } 
-    const note = window.prompt(`📝 ระบุหมายเหตุ:`) || 'เติมผ่านระบบ Admin'; 
-    try { 
-      const response = await fetch('http://localhost:3000/api/inventory/refill', { 
-        method: 'POST', 
-        headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ ingredient_id: ingredient.ingredient_id, employee_id: user?.employee_id, quantity, note }) 
-      }); 
-      if ((await response.json()).success) { 
-        alert(`✅ เติมสต็อกสำเร็จ!`); 
-        fetchInventory(); 
-      } 
-    } catch (error) { console.error(error); } 
+    const quantity = parseFloat(qtyStr);
+    if (isNaN(quantity) || quantity <= 0) { alert('❌ ตัวเลขไม่ถูกต้อง'); return; }
+    try { const res = await fetch('http://localhost:3000/api/inventory/refill', { 
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ ingredient_id: ingredient.ingredient_id, employee_id: user?.employee_id, quantity, note: 'เติมผ่านระบบ Admin' }) 
+    }); if ((await res.json()).success) { alert(`✅ เติมสต็อกสำเร็จ!`); fetchInventory(); } } catch (err) { console.error(err); } 
   };
 
+  // -- สูตรชง --
+  const handleAddRecipe = async (e) => {
+    e.preventDefault();
+    if (!selectedProductId || !selectedIngredientId || !quantityUsed) return alert('กรุณากรอกข้อมูลให้ครบ');
+    try { const res = await fetch('http://localhost:3000/api/recipes', { 
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+      body: JSON.stringify({ product_id: selectedProductId, ingredient_id: selectedIngredientId, quantity_used: quantityUsed }) 
+    }); if ((await res.json()).success) { setSelectedIngredientId(''); setQuantityUsed(''); fetchRecipes(selectedProductId); } } catch (err) { console.error(err); }
+  };
+
+  const handleDeleteRecipe = async (recipeId) => {
+    if (!window.confirm('ลบวัตถุดิบนี้ออกจากสูตร?')) return;
+    try { const res = await fetch(`http://localhost:3000/api/recipes/${recipeId}`, { method: 'DELETE' }); if ((await res.json()).success) fetchRecipes(selectedProductId); } catch (err) { console.error(err); }
+  };
+
+  // -- พนักงาน --
+  const handleAddEmployee = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch('http://localhost:3000/api/employees', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: empName, role: empRole, email: empEmail, password: empPassword })
+      });
+      if ((await response.json()).success) { alert('✅ เพิ่มพนักงานสำเร็จ'); setEmpName(''); setEmpEmail(''); setEmpPassword(''); setEmpRole('barista'); fetchEmployees(); }
+    } catch (err) { console.error(err); }
+  };
+
+  const handleDeleteEmployee = async (id, name) => {
+    if (!window.confirm(`⚠️ ลบพนักงาน: ${name}?`)) return;
+    try { const response = await fetch(`http://localhost:3000/api/employees/${id}`, { method: 'DELETE' }); if ((await response.json()).success) fetchEmployees(); } catch (err) { console.error(err); }
+  };
+
+  // ==========================================
+  // 🎨 UI Style
+  // ==========================================
+  const tabStyle = (tabName) => ({
+    padding: '10px 20px', borderRadius: '8px 8px 0 0', border: 'none', fontWeight: 'bold', cursor: 'pointer',
+    backgroundColor: activeTab === tabName ? '#4A3B32' : '#eee', color: activeTab === tabName ? 'white' : '#333'
+  });
+
   return (
-    <div style={{ maxWidth: '900px', margin: '0 auto', padding: '20px' }}>
+    <div style={{ maxWidth: '1000px', margin: '0 auto', padding: '20px' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <h2 style={{ color: '#4A3B32' }}>👨‍💼 ระบบจัดการหลังร้าน (Admin Dashboard)</h2>
-        <span style={{ backgroundColor: '#E8D5C4', padding: '5px 15px', borderRadius: '20px', color: '#4A3B32', fontWeight: 'bold' }}>
-          👤 Admin: {user?.name || 'Unknown'}
-        </span>
+        <span style={{ backgroundColor: '#E8D5C4', padding: '5px 15px', borderRadius: '20px', color: '#4A3B32', fontWeight: 'bold' }}>👤 Admin: {user?.name || 'Unknown'}</span>
       </div>
 
-      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #E8D5C4', paddingBottom: '10px' }}>
-        <button onClick={() => setActiveTab('menu')} style={{ padding: '10px 20px', borderRadius: '8px 8px 0 0', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: activeTab === 'menu' ? '#4A3B32' : '#eee', color: activeTab === 'menu' ? 'white' : '#333' }}>☕ จัดการเมนู</button>
-        <button onClick={() => setActiveTab('inventory')} style={{ padding: '10px 20px', borderRadius: '8px 8px 0 0', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: activeTab === 'inventory' ? '#4A3B32' : '#eee', color: activeTab === 'inventory' ? 'white' : '#333' }}>📦 ดูสต็อก</button>
-        <button onClick={() => { setActiveTab('reports'); fetchSalesReport(); }} style={{ padding: '10px 20px', borderRadius: '8px 8px 0 0', border: 'none', fontWeight: 'bold', cursor: 'pointer', backgroundColor: activeTab === 'reports' ? '#4A3B32' : '#eee', color: activeTab === 'reports' ? 'white' : '#333' }}>📈 รายงานยอดขาย</button>
+      <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '2px solid #E8D5C4', paddingBottom: '10px', flexWrap: 'wrap' }}>
+        <button onClick={() => setActiveTab('menu')} style={tabStyle('menu')}>☕ จัดการเมนู</button>
+        <button onClick={() => setActiveTab('recipes')} style={tabStyle('recipes')}>📖 จัดการสูตรชง</button>
+        <button onClick={() => setActiveTab('inventory')} style={tabStyle('inventory')}>📦 ดูสต็อก</button>
+        <button onClick={() => setActiveTab('employees')} style={tabStyle('employees')}>👥 จัดการพนักงาน</button>
+        <button onClick={() => { setActiveTab('reports'); fetchSalesReport(); }} style={tabStyle('reports')}>📈 รายงานยอดขาย</button>
       </div>
 
+      {/* ==================== แท็บ 1: จัดการเมนู ==================== */}
       {activeTab === 'menu' && (
         <div>
           <div style={{ backgroundColor: '#FFFaf0', padding: '20px', borderRadius: '10px', marginBottom: '30px', border: '1px solid #E8D5C4' }}>
-            <h3 style={{ marginTop: 0, color: '#E67E22' }}>+ เพิ่มเมนูใหม่</h3>
-            <form onSubmit={handleAddProduct} style={{ display: 'grid', gap: '10px' }}>
-              <input type="text" placeholder="ชื่อเมนู" value={name} onChange={(e) => setName(e.target.value)} required style={{ padding: '8px' }} />
-              <input type="number" placeholder="ราคา" value={price} onChange={(e) => setPrice(e.target.value)} required style={{ padding: '8px' }} />
-              <button type="submit" style={{ padding: '10px', backgroundColor: '#4CAF50', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>บันทึกเมนู</button>
+            <h3 style={{ marginTop: 0, color: '#d35400' }}>+ เพิ่มเมนูใหม่</h3>
+            <form onSubmit={handleAddProduct} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              <input type="text" placeholder="ชื่อเมนู" value={name} onChange={(e) => setName(e.target.value)} required style={{ padding: '10px' }} />
+              <input type="number" placeholder="ราคา (บาท)" value={price} onChange={(e) => setPrice(e.target.value)} required style={{ padding: '10px' }} />
+              <input type="text" placeholder="รายละเอียด (ถ้ามี)" value={description} onChange={(e) => setDescription(e.target.value)} style={{ padding: '10px' }} />
+              <input type="text" placeholder="URL รูปภาพ (ถ้ามี)" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} style={{ padding: '10px' }} />
+              <button type="submit" style={{ gridColumn: 'span 2', padding: '12px', backgroundColor: '#27ae60', color: 'white', fontWeight: 'bold', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>บันทึกเมนู</button>
             </form>
           </div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#4A3B32', color: 'white', textAlign: 'left' }}><th style={{ padding: '12px' }}>ชื่อเมนู</th><th style={{ padding: '12px' }}>ราคา</th><th style={{ padding: '12px' }}>จัดการ</th></tr>
-            </thead>
-            <tbody>
-              {products.map((p) => (
-                <tr key={p.product_id} style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '10px', fontWeight: 'bold' }}>{p.name}</td><td style={{ padding: '10px', color: '#E67E22' }}>฿{p.price}</td><td style={{ padding: '10px' }}><button onClick={() => handleDelete(p.product_id, p.name)} style={{ backgroundColor: '#e74c3c', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>ลบ</button></td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {activeTab === 'inventory' && (
-        <div>
-          <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#4A3B32', color: 'white', textAlign: 'left' }}><th style={{ padding: '12px' }}>ชื่อวัตถุดิบ</th><th style={{ padding: '12px' }}>คงเหลือ</th><th style={{ padding: '12px' }}>จัดการ</th></tr>
-            </thead>
-            <tbody>
-              {inventory.map((item) => (
-                <tr key={item.ingredient_id} style={{ borderBottom: '1px solid #eee' }}><td style={{ padding: '10px', fontWeight: 'bold' }}>{item.name}</td><td style={{ padding: '10px' }}>{item.current_stock} {item.unit}</td><td style={{ padding: '10px' }}><button onClick={() => handleRefill(item)} style={{ backgroundColor: '#f39c12', color: 'white', border: 'none', padding: '6px 15px', borderRadius: '5px', cursor: 'pointer', fontWeight: 'bold' }}>➕ เติมของ</button></td></tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-
-      {activeTab === 'reports' && (
-        <div>
-          <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
-            <div style={{ flex: 1, backgroundColor: '#2ecc71', color: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ margin: '0 0 10px 0' }}>💰 ยอดขายรวม (บาท)</h3>
-              <p style={{ fontSize: '32px', margin: 0, fontWeight: 'bold' }}>฿{parseFloat(salesReport.summary.total_revenue || 0).toLocaleString()}</p>
-            </div>
-            <div style={{ flex: 1, backgroundColor: '#3498db', color: 'white', padding: '20px', borderRadius: '10px', textAlign: 'center', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
-              <h3 style={{ margin: '0 0 10px 0' }}>🧾 จำนวนออเดอร์</h3>
-              <p style={{ fontSize: '32px', margin: 0, fontWeight: 'bold' }}>{salesReport.summary.total_orders || 0} รายการ</p>
-            </div>
-          </div>
-
-          <h3 style={{ color: '#4A3B32', borderBottom: '2px solid #E8D5C4', paddingBottom: '10px' }}>🏆 5 อันดับเมนูขายดี</h3>
-          <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white' }}>
             <thead>
               <tr style={{ backgroundColor: '#4A3B32', color: 'white', textAlign: 'left' }}>
-                <th style={{ padding: '12px' }}>อันดับ</th>
-                <th style={{ padding: '12px' }}>ชื่อเมนู</th>
-                <th style={{ padding: '12px' }}>จำนวนแก้วที่ขายได้</th>
-                <th style={{ padding: '12px' }}>สร้างรายได้ (บาท)</th>
+                <th style={{ padding: '12px' }}>รูป</th><th style={{ padding: '12px' }}>ชื่อเมนู</th><th style={{ padding: '12px' }}>ราคา</th><th style={{ padding: '12px' }}>รายละเอียด</th><th style={{ padding: '12px' }}>จัดการ</th>
               </tr>
             </thead>
             <tbody>
-              {salesReport.topProducts.length > 0 ? (
-                salesReport.topProducts.map((product, index) => (
-                  <tr key={index} style={{ borderBottom: '1px solid #eee' }}>
-                    <td style={{ padding: '10px', fontWeight: 'bold', color: '#E67E22' }}>#{index + 1}</td>
-                    <td style={{ padding: '10px', fontWeight: 'bold' }}>{product.name}</td>
-                    <td style={{ padding: '10px' }}>{product.total_sold} แก้ว</td>
-                    <td style={{ padding: '10px', color: '#27ae60', fontWeight: 'bold' }}>฿{parseFloat(product.total_revenue).toLocaleString()}</td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="4" style={{ padding: '20px', textAlign: 'center', color: '#999' }}>ยังไม่มีข้อมูลการขายในระบบ</td>
+              {products.map((p) => (
+                <tr key={p.product_id} style={{ borderBottom: '1px solid #eee' }}>
+                  <td style={{ padding: '10px' }}>
+                    {p.image_url ? <img src={p.image_url} alt={p.name} style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '5px' }}/> : '🚫'}
+                  </td>
+                  <td style={{ padding: '10px', fontWeight: 'bold' }}>{p.name}</td>
+                  <td style={{ padding: '10px', color: '#d35400' }}>฿{p.price}</td>
+                  <td style={{ padding: '10px', color: '#666' }}>{p.description || '-'}</td>
+                  <td style={{ padding: '10px' }}><button onClick={() => handleDeleteProduct(p.product_id, p.name)} style={{ backgroundColor: '#e74c3c', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>ลบ</button></td>
                 </tr>
-              )}
+              ))}
             </tbody>
           </table>
-
-          {/* 🌟 2. เพิ่มส่วนของกราฟด้านล่างตาราง */}
-          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 4px 6px rgba(0,0,0,0.05)', marginTop: '30px' }}>
-            <h3 style={{ color: '#4A3B32', marginBottom: '20px', borderBottom: '2px solid #E8D5C4', paddingBottom: '10px' }}>📊 กราฟแสดงจำนวนแก้วที่ขายได้</h3>
-            
-            <div style={{ width: '100%', height: 350 }}>
-              {salesReport.topProducts.length > 0 ? (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={salesReport.topProducts} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                    <XAxis dataKey="name" tick={{fill: '#4A3B32'}} />
-                    <YAxis tick={{fill: '#4A3B32'}} />
-                    <Tooltip 
-                      formatter={(value) => [`${value} แก้ว`, 'จำนวนที่ขายได้']}
-                      contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 2px 10px rgba(0,0,0,0.1)' }}
-                    />
-                    <Legend />
-                    <Bar dataKey="total_sold" fill="#E67E22" name="จำนวนแก้ว" radius={[5, 5, 0, 0]} barSize={50} />
-                  </BarChart>
-                </ResponsiveContainer>
-              ) : (
-                <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%', color: '#999' }}>
-                  ยังไม่มีข้อมูลเพียงพอสำหรับแสดงกราฟ
-                </div>
-              )}
-            </div>
-          </div>
-
         </div>
       )}
+
+      {/* ==================== แท็บ 2: จัดการสูตรชง ==================== */}
+      {activeTab === 'recipes' && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '20px' }}>
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ marginTop: 0 }}>1. เลือกเมนูที่ต้องการผูกสูตร</h3>
+            <select value={selectedProductId} onChange={(e) => setSelectedProductId(e.target.value)} style={{ width: '100%', padding: '10px', fontSize: '16px' }}>
+              <option value="">-- กรุณาเลือกเมนู --</option>
+              {products.map(p => <option key={p.product_id} value={p.product_id}>{p.name}</option>)}
+            </select>
+          </div>
+          <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px', boxShadow: '0 2px 5px rgba(0,0,0,0.1)' }}>
+            <h3 style={{ marginTop: 0 }}>2. วัตถุดิบที่ใช้ในเมนูนี้</h3>
+            {!selectedProductId ? (<p style={{ color: '#888' }}>กรุณาเลือกเมนูก่อนครับ</p>) : (
+              <>
+                <form onSubmit={handleAddRecipe} style={{ display: 'flex', gap: '10px', marginBottom: '20px' }}>
+                  <select value={selectedIngredientId} onChange={(e) => setSelectedIngredientId(e.target.value)} required style={{ flex: 2, padding: '8px' }}>
+                    <option value="">-- เลือกวัตถุดิบ --</option>
+                    {inventory.map(inv => <option key={inv.ingredient_id} value={inv.ingredient_id}>{inv.name} ({inv.unit})</option>)}
+                  </select>
+                  <input type="number" placeholder="ปริมาณที่ใช้" value={quantityUsed} onChange={(e) => setQuantityUsed(e.target.value)} required step="0.01" style={{ flex: 1, padding: '8px' }} />
+                  <button type="submit" style={{ flex: 1, backgroundColor: '#2ecc71', color: 'white', border: 'none', borderRadius: '5px', cursor: 'pointer' }}>+ เพิ่ม</button>
+                </form>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead><tr style={{ backgroundColor: '#f9f9f9' }}><th style={{ padding: '8px', textAlign: 'left' }}>วัตถุดิบ</th><th style={{ padding: '8px', textAlign: 'left' }}>ปริมาณที่ใช้</th><th style={{ padding: '8px' }}>ลบ</th></tr></thead>
+                  <tbody>
+                    {recipes.map(r => (
+                      <tr key={r.recipe_id} style={{ borderBottom: '1px solid #eee' }}>
+                        <td style={{ padding: '8px' }}>{r.ingredient_name}</td>
+                        <td style={{ padding: '8px' }}>{r.quantity_used} {r.unit}</td>
+                        <td style={{ padding: '8px', textAlign: 'center' }}><button onClick={() => handleDeleteRecipe(r.recipe_id)} style={{ color: 'red', border: 'none', background: 'none', cursor: 'pointer' }}>❌</button></td>
+                      </tr>
+                    ))}
+                    {recipes.length === 0 && <tr><td colSpan="3" style={{ padding: '10px', textAlign: 'center', color: '#999' }}>ยังไม่ได้เพิ่มสูตรชง</td></tr>}
+                  </tbody>
+                </table>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ==================== แท็บ 3: ดูสต็อก ==================== */}
+      {activeTab === 'inventory' && (
+        <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white' }}>
+          <thead><tr style={{ backgroundColor: '#4A3B32', color: 'white', textAlign: 'left' }}><th style={{ padding: '12px' }}>วัตถุดิบ</th><th style={{ padding: '12px' }}>คงเหลือ</th><th style={{ padding: '12px' }}>จัดการ</th></tr></thead>
+          <tbody>
+            {inventory.map((inv) => (
+              <tr key={inv.ingredient_id} style={{ borderBottom: '1px solid #eee' }}>
+                <td style={{ padding: '10px', fontWeight: 'bold' }}>{inv.name}</td>
+                <td style={{ padding: '10px', color: inv.current_stock < 50 ? 'red' : 'inherit' }}>{inv.current_stock} {inv.unit}</td>
+                <td style={{ padding: '10px' }}><button onClick={() => handleRefill(inv)} style={{ backgroundColor: '#f39c12', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>+ เติมของ</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+
+      {/* ==================== แท็บ 4: จัดการพนักงาน ==================== */}
+      {activeTab === 'employees' && (
+        <div>
+          <div style={{ backgroundColor: '#FFFaf0', padding: '20px', borderRadius: '10px', marginBottom: '30px', border: '1px solid #E8D5C4' }}>
+            <h3 style={{ marginTop: 0, color: '#3498db' }}>+ เพิ่มพนักงานใหม่</h3>
+            <form onSubmit={handleAddEmployee} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
+              <input type="text" placeholder="ชื่อ-นามสกุล" value={empName} onChange={(e) => setEmpName(e.target.value)} required style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }} />
+              <select value={empRole} onChange={(e) => setEmpRole(e.target.value)} style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }}>
+                <option value="barista">บาริสต้า (Barista)</option>
+                <option value="cashier">แคชเชียร์ (Cashier)</option>
+                <option value="admin">แอดมิน (Admin)</option>
+              </select>
+              <input type="email" placeholder="Email (สำหรับ Login)" value={empEmail} onChange={(e) => setEmpEmail(e.target.value)} required style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }} />
+              <input type="password" placeholder="Password (รหัสผ่าน)" value={empPassword} onChange={(e) => setEmpPassword(e.target.value)} required style={{ padding: '10px', border: '1px solid #ccc', borderRadius: '5px' }} />
+              <button type="submit" style={{ gridColumn: 'span 2', padding: '12px', backgroundColor: '#3498db', color: 'white', border: 'none', borderRadius: '5px', fontWeight: 'bold', cursor: 'pointer' }}>บันทึกพนักงาน</button>
+            </form>
+          </div>
+          <table style={{ width: '100%', borderCollapse: 'collapse', backgroundColor: 'white' }}>
+            <thead><tr style={{ backgroundColor: '#4A3B32', color: 'white', textAlign: 'left' }}><th style={{ padding: '12px' }}>รหัส (ย่อ)</th><th style={{ padding: '12px' }}>ชื่อ</th><th style={{ padding: '12px' }}>ตำแหน่ง</th><th style={{ padding: '12px' }}>Email</th><th style={{ padding: '12px' }}>จัดการ</th></tr></thead>
+            <tbody>
+              {employees.map((emp) => (
+                <tr key={emp.employee_id} style={{ borderBottom: '1px solid #eee' }}>
+                  <td style={{ padding: '10px', color: '#888' }}>#{String(emp.employee_id).substring(0, 8)}</td>
+                  <td style={{ padding: '10px', fontWeight: 'bold' }}>{emp.name}</td>
+                  <td style={{ padding: '10px' }}>
+                    <span style={{ backgroundColor: emp.role === 'admin' ? '#e74c3c' : emp.role === 'barista' ? '#f39c12' : '#2ecc71', color: 'white', padding: '4px 10px', borderRadius: '15px', fontSize: '12px', fontWeight: 'bold', textTransform: 'capitalize' }}>{emp.role}</span>
+                  </td>
+                  <td style={{ padding: '10px' }}>{emp.email}</td>
+                  <td style={{ padding: '10px' }}><button onClick={() => handleDeleteEmployee(emp.employee_id, emp.name)} style={{ backgroundColor: '#e74c3c', color: 'white', border: 'none', padding: '6px 12px', borderRadius: '4px', cursor: 'pointer' }}>ลบ</button></td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* ==================== แท็บ 5: รายงานยอดขาย (แก้ตรงนี้แล้ว 📈) ==================== */}
+      {activeTab === 'reports' && (
+        <div style={{ backgroundColor: 'white', padding: '20px', borderRadius: '10px' }}>
+          <div style={{ display: 'flex', gap: '20px', marginBottom: '30px' }}>
+            <div style={{ flex: 1, backgroundColor: '#f1c40f', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
+              <h3 style={{ margin: 0, color: '#fff' }}>ยอดขายรวมทั้งหมด</h3>
+              {/* เปลี่ยนค่าให้โชว์เป็นตัวเลขและใส่ลูกน้ำ (,) */}
+              <h1 style={{ margin: '10px 0 0 0', color: '#fff', fontSize: '36px' }}>฿{Number(salesReport.summary.total_sales || 0).toLocaleString()}</h1>
+            </div>
+            <div style={{ flex: 1, backgroundColor: '#3498db', padding: '20px', borderRadius: '10px', textAlign: 'center' }}>
+              <h3 style={{ margin: 0, color: '#fff' }}>จำนวนออเดอร์</h3>
+              <h1 style={{ margin: '10px 0 0 0', color: '#fff', fontSize: '36px' }}>{salesReport.summary.total_orders || 0} บิล</h1>
+            </div>
+          </div>
+          <h3>🏆 Top 5 เมนูขายดี</h3>
+          {salesReport.topProducts.length > 0 ? (
+            <div style={{ height: '300px', width: '100%' }}>
+              <ResponsiveContainer>
+                {/* เพิ่ม .map เพื่อแปลงค่า total_qty ให้เป็น Number() กราฟจะได้วาดแท่งถูก */}
+                <BarChart data={salesReport.topProducts.map(item => ({ ...item, total_qty: Number(item.total_qty || 0) }))} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="total_qty" name="จำนวนแก้วที่ขายได้" fill="#8e44ad" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          ) : (<p style={{ textAlign: 'center', color: '#888' }}>ยังไม่มีข้อมูลยอดขาย</p>)}
+        </div>
+      )}
+
     </div>
   );
 }

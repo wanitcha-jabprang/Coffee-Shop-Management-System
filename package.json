@@ -19,7 +19,8 @@
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
-    "pg": "^8.18.0",
+    "multer": "^2.1.1",
+    "pg": "^8.20.0",
     "recharts": "^3.7.0"
   },
   "devDependencies": {

@@ -17,15 +17,17 @@ const pool = new Pool({
   database: 'coffee_shop'   
 });
 
+
 // 1. API: ดึงข้อมูลสินค้าทั้งหมด
 app.get('/api/products', async (req, res) => {
   try {
     const result = await pool.query(`
-      SELECT product_id, name, description, base_price AS price, image_url 
+      SELECT product_id, name, description, price, image_url 
       FROM products
     `);
     res.json(result.rows);
   } catch (err) {
+    console.error("Error Fetching Products:", err.message);
     res.status(500).json({ error: 'Server Error' });
   }
 });
@@ -35,11 +37,12 @@ app.post('/api/products', async (req, res) => {
   const { name, price, description, image_url } = req.body; 
   try {
     const result = await pool.query(
-      'INSERT INTO products (name, base_price, description, image_url) VALUES ($1, $2, $3, $4) RETURNING *',
-      [name, price, description, image_url]
+      'INSERT INTO products (name, price, description, image_url) VALUES ($1, $2, $3, $4) RETURNING *',
+      [name, price, description || '', image_url || '']
     );
     res.json({ success: true, message: 'เพิ่มเมนูสำเร็จ!', product: result.rows[0] });
   } catch (err) {
+    console.error("❌ Error adding product:", err.message); 
     res.status(500).json({ error: 'ไม่สามารถเพิ่มเมนูได้' });
   }
 });
@@ -67,7 +70,8 @@ app.post('/api/orders', async (req, res) => {
       await pool.query(
         `INSERT INTO order_items (order_id, product_id, quantity, unit_price) 
          VALUES ($1, $2, $3, $4)`,
-        [orderId, item.product_id, item.quantity, item.price || item.base_price]
+        // 🌟 แก้ไข: ดึงค่า price หรือ base_price ให้ชัวร์ ถ้าไม่มีให้เป็น 0
+        [orderId, item.product_id, item.quantity, item.price || item.base_price || 0]
       );
     }
 
@@ -191,14 +195,28 @@ app.post('/api/inventory/refill', async (req, res) => {
 // 10. API: รายงานยอดขาย
 app.get('/api/reports/sales', async (req, res) => {
   try {
-    const summaryResult = await pool.query(`SELECT COALESCE(SUM(total_amount), 0) AS total_revenue, COUNT(order_id) AS total_orders FROM orders WHERE status = 'completed'`);
-    const topProductsResult = await pool.query(`
-      SELECT p.name, SUM(oi.quantity) AS total_sold, SUM(oi.quantity * oi.unit_price) AS total_revenue
-      FROM order_items oi JOIN orders o ON oi.order_id = o.order_id JOIN products p ON oi.product_id = p.product_id
-      WHERE o.status = 'completed' GROUP BY p.product_id, p.name ORDER BY total_sold DESC LIMIT 5
+    // 🌟 แก้ไข: ดึงยอดขายทั้งหมด ไม่ว่า status จะเป็นอะไรก็ตาม (เพื่อให้เห็นยอดรวมง่ายๆ)
+    // 🌟 เปลี่ยนชื่อคอลัมน์ total_revenue กลับเป็น total_sales เพื่อให้ตรงกับฝั่ง React หน้าบ้าน 
+    const summaryResult = await pool.query(`
+      SELECT COALESCE(SUM(total_amount), 0) AS total_sales, COUNT(order_id) AS total_orders 
+      FROM orders 
+      -- เอา WHERE status = 'completed' ออกชั่วคราว เพื่อให้บิลที่กำลังทำ (pending) ก็นับยอดด้วย
     `);
+
+    // 🌟 แก้ไข: ดึงยอดขายเมนูขายดี แบบไม่สน status
+    const topProductsResult = await pool.query(`
+      SELECT p.name, SUM(oi.quantity) AS total_qty, SUM(oi.quantity * oi.unit_price) AS total_revenue
+      FROM order_items oi 
+      JOIN orders o ON oi.order_id = o.order_id 
+      JOIN products p ON oi.product_id = p.product_id
+      GROUP BY p.product_id, p.name 
+      ORDER BY total_qty DESC 
+      LIMIT 5
+    `);
+
     res.json({ success: true, summary: summaryResult.rows[0], topProducts: topProductsResult.rows });
   } catch (err) {
+    console.error("Sales Report Error:", err.message);
     res.status(500).json({ error: 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์' });
   }
 });
@@ -300,6 +318,95 @@ app.post('/api/orders/checkout', async (req, res) => {
     await pool.query('ROLLBACK');
     console.error('Checkout Error:', err.message);
     res.status(500).json({ error: 'ไม่สามารถทำรายการได้ในขณะนี้' });
+  }
+});
+
+// 15. API: ดึงสูตรของเมนู
+app.get('/api/recipes/:productId', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT r.recipe_id, i.name as ingredient_name, r.quantity_used, i.unit 
+      FROM product_recipes r
+      JOIN ingredients i ON r.ingredient_id = i.ingredient_id
+      WHERE r.product_id = $1
+    `, [req.params.productId]);
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching recipes:", err.message);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+// 16. API: เพิ่มวัตถุดิบลงในสูตร
+app.post('/api/recipes', async (req, res) => {
+  const { product_id, ingredient_id, quantity_used } = req.body;
+  try {
+    await pool.query(
+      'INSERT INTO product_recipes (product_id, ingredient_id, quantity_used) VALUES ($1, $2, $3)',
+      [product_id, ingredient_id, quantity_used]
+    );
+    res.json({ success: true, message: 'เพิ่มสูตรสำเร็จ' });
+  } catch (err) {
+    console.error("Error adding recipe:", err.message);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+// 17. API: ลบวัตถุดิบออกจากสูตร
+app.delete('/api/recipes/:recipeId', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM product_recipes WHERE recipe_id = $1', [req.params.recipeId]);
+    res.json({ success: true, message: 'ลบสูตรสำเร็จ' });
+  } catch (err) {
+    console.error("Error deleting recipe:", err.message);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+// ==========================================
+// 🧑‍💼 API หมวดพนักงาน (Employees)
+// ==========================================
+
+// ==========================================
+// 🧑‍💼 API หมวดพนักงาน (Employees) - อัปเดตใหม่ให้ตรง DB
+// ==========================================
+
+// 18. API: ดึงรายชื่อพนักงานทั้งหมด
+app.get('/api/employees', async (req, res) => {
+  try {
+    // เปลี่ยนมาดึง email แทน username
+    const result = await pool.query('SELECT employee_id, name, role, email FROM employees ORDER BY created_at ASC');
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error fetching employees:", err.message);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+// 19. API: เพิ่มพนักงานใหม่
+app.post('/api/employees', async (req, res) => {
+  const { name, role, email, password } = req.body;
+  try {
+    // เปลี่ยนมาใช้ email และ password_hash
+    await pool.query(
+      'INSERT INTO employees (name, role, email, password_hash) VALUES ($1, $2, $3, $4)',
+      [name, role, email, password]
+    );
+    res.json({ success: true, message: 'เพิ่มพนักงานสำเร็จ' });
+  } catch (err) {
+    console.error("Error adding employee:", err.message);
+    res.status(500).json({ error: 'Server Error' });
+  }
+});
+
+// 20. API: ลบพนักงาน
+app.delete('/api/employees/:id', async (req, res) => {
+  try {
+    await pool.query('DELETE FROM employees WHERE employee_id = $1', [req.params.id]);
+    res.json({ success: true, message: 'ลบพนักงานสำเร็จ' });
+  } catch (err) {
+    console.error("Error deleting employee:", err.message);
+    res.status(500).json({ error: 'Server Error' });
   }
 });
 app.get('/', (req, res) => res.send('Backend is running with PostgreSQL! ☕'));
