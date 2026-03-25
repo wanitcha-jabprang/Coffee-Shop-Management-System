@@ -1,4 +1,4 @@
-# ☕ Coffee POS System (Full-stack Web Application)
+# Coffee Shop Management System
 
 ระบบบริหารจัดการร้านกาแฟแบบครบวงจร ตั้งแต่หน้าการเลือกเมนูสำหรับลูกค้า ไปจนถึงระบบหลังบ้านสำหรับบาริสต้าและการจัดการแต้มสะสม
 
