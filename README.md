@@ -96,36 +96,41 @@ Frontend (React + Vite) <---> Backend (Node.js/Express) <---> Database (PostgreS
 
 ## 3.4 UX/UI
 ### ระบบหน้าร้าน
-[![alt text](image-5.png)]
-[![alt text](image-6.png)]
-[![alt text](image-7.png)]
-[![alt text](image-8.png)]
----
+[<img width="1919" height="1079" alt="Screenshot 2026-03-25 121038" src="https://github.com/user-attachments/assets/ab6a56a1-e6ae-4ab2-a532-0dd0675b5c04" />
+]
+[<img width="1919" height="1079" alt="Screenshot 2026-03-25 121140" src="https://github.com/user-attachments/assets/9c0efe04-96c8-4d33-aa81-3eeff77a5063" />]
+[<img width="1919" height="1079" alt="Screenshot 2026-03-25 121202" src="https://github.com/user-attachments/assets/9a917af9-00f6-4ef9-9221-59066c7b2318" />]
+[<img width="1919" height="1079" alt="Screenshot 2026-03-25 121225" src="https://github.com/user-attachments/assets/34e30f39-f82d-4977-a759-fa8152bd2a24" />]
+
 
 ### ระบบสมัตรสมาชิก
-[![alt text](image-9.png)]
-[![alt text](image-10.png)]
+[<img width="1918" height="1024" alt="Screenshot 2026-03-25 121447" src="https://github.com/user-attachments/assets/d2a68a59-cfb8-4f70-8ed9-d4bf619bd44f" />]
+[<img width="1919" height="1014" alt="Screenshot 2026-03-25 121546" src="https://github.com/user-attachments/assets/f77cbbbf-43f9-47f1-9f5e-8277e5e358b0" />]
+
 ---
 ### ระบบสมาชิก 
-[![alt text](image-11.png)]
-[![alt text](image-12.png)]
+<img width="1919" height="1020" alt="Screenshot 2026-03-25 121649" src="https://github.com/user-attachments/assets/26f8742c-3e06-4020-a015-780c836bd1c9" />
+<img width="1919" height="1025" alt="Screenshot 2026-03-25 121739" src="https://github.com/user-attachments/assets/27d37626-dd81-41e6-82ae-e20194d0182d" />
+
 ---
 ## ระบบหลังร้าน
 
 ### ระบบ Baristar 
-[![alt text](image-13.png)]
-ิ[![alt text](image-14.png)]
-[![alt text](image-15.png)]
-[![alt text](image-16.png)]
+<img width="1917" height="1020" alt="Screenshot 2026-03-25 121949" src="https://github.com/user-attachments/assets/3f2081b6-47cf-4ed1-b6cb-746c320f9543" />
+<img width="1917" height="1028" alt="Screenshot 2026-03-25 122014" src="https://github.com/user-attachments/assets/0dd9779b-8c02-4522-a599-c3bc3688a76f" />
+<img width="1918" height="1079" alt="Screenshot 2026-03-25 122044" src="https://github.com/user-attachments/assets/7df0540f-49dc-4530-9af4-fac0b48ee201" />
+<img width="1919" height="1016" alt="Screenshot 2026-03-25 122122" src="https://github.com/user-attachments/assets/21deef14-236f-4344-bbb4-b21abc29aa23" />
+
 ---
 
 ## ระบบ Admin
-[![alt text](image-17.png)]
-[![alt text](image-18.png)]
-[![alt text](image-19.png)]
-[![alt text](image-20.png)]
-[![alt text](image-21.png)]
-[![alt text](image-22.png)]
+<img width="1917" height="1022" alt="Screenshot 2026-03-25 122328" src="https://github.com/user-attachments/assets/30775406-e995-40fa-a7e2-07c27337d8a0" />
+<img width="1919" height="1014" alt="Screenshot 2026-03-25 122357" src="https://github.com/user-attachments/assets/7e2d7063-7500-43be-abc4-dbeae34e40e1" />
+<img width="1919" height="1025" alt="Screenshot 2026-03-25 122425" src="https://github.com/user-attachments/assets/e68ec3e9-41b7-45dd-b639-bf499a721f6f" />
+<img width="1919" height="1032" alt="Screenshot 2026-03-25 122446" src="https://github.com/user-attachments/assets/8d13c4c5-b4e3-4017-8fbb-ae871596c30b" />
+<img width="1919" height="1024" alt="Screenshot 2026-03-25 122521" src="https://github.com/user-attachments/assets/794d67fc-def9-4394-a58a-c9d716502aa2" />
+<img width="1919" height="1021" alt="Screenshot 2026-03-25 122546" src="https://github.com/user-attachments/assets/32291de1-5d23-4ec5-8cb9-9b621680947a" />
+
 
 ## 4. Tech Stack & Tools
 * **Frontend**: React.js, Vite, CSS3
