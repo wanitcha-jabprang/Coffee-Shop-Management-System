@@ -165,6 +165,9 @@ Frontend (React + Vite) <---> Backend (Node.js/Express) <---> Database (PostgreS
 | **TC-04** | DB | ตรวจสอบเงื่อนไข ENUM ของวิธีการชำระเงิน | ส่งค่า `payment_method` เป็น `"qr_code"` ซึ่งไม่ตรงกับที่ตั้งไว้ | ระบบควรแจ้งเตือนว่าไม่รู้จักประเภทการชำระเงินนี้ | DB ฟ้อง Error `invalid input value for enum` ป้องกันข้อมูลผิดพลาดได้จริง | 🟢 PASS |
 | **TC-05** | DB | ตรวจสอบข้อจำกัด Not-Null (ยอดเงิน) | ส่งข้อมูล Checkout โดยไม่ระบุยอดเงิน (`amount`) | ฐานข้อมูลต้องปฏิเสธการบันทึก เพื่อป้องกันข้อมูลการเงินสูญหาย | DB ฟ้อง Error `violates not-null constraint` ระบบป้องกันได้ตามที่ออกแบบไว้ | 🟢 PASS |
 
+การทดสอบหลังพัฒนาเปรียบเทียบกับSRS:
+https://github.com/wanitcha-jabprang/Coffee-Shop-Management-System/blob/feature/database-sek/Test%20Case.pdf
+
 ---
 ### Deploy
 * **Backend API URL**: `https://coffee-backend-api.onrender.com`
