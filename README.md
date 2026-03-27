@@ -40,6 +40,21 @@ Frontend (React + Vite) <---> Backend (Node.js/Express) <---> Database (PostgreS
 [![alt text](image.png)]
 [![alt text](image-1.png)]
 
+
+
+### use case 
+
+<img width="755" height="909" alt="Screenshot 2026-03-26 223911" src="https://github.com/user-attachments/assets/3ece029b-2f92-4d9c-a958-d6e0aca8f163" />
+### use flow
+<img width="400" height="510" alt="Screenshot 2026-03-26 225120" src="https://github.com/user-attachments/assets/e59adb75-48b5-4319-b209-f5e16103c0c0" />
+<img width="516" height="717" alt="Screenshot 2026-03-26 225300" src="https://github.com/user-attachments/assets/904b34aa-a3aa-4d77-a9da-2b95998074a5" />
+<img width="1318" height="651" alt="Screenshot 2026-03-26 225400" src="https://github.com/user-attachments/assets/d905d62d-e1a6-4ee0-b7df-56dc7626428c" />
+### Activity 
+<img width="1935" height="8192" alt="Order Processing and-2026-03-26-154246" src="https://github.com/user-attachments/assets/8a0258c5-6f84-493a-b273-0183f5276daf" />
+
+
+
+
 ระบบฐานข้อมูลของ Coffee POS System ได้รับการออกแบบให้อยู่ในรูปแบบ Relational Database (PostgreSQL) เพื่อรองรับการขยายตัวของธุรกิจร้านกาแฟ โดยแบ่งโครงสร้างหลักออกเป็น 4 ระบบงาน (Modules) ดังนี้:
 
 #### 1. ระบบจัดการการขายและสินค้า (Sales & Product Management)
