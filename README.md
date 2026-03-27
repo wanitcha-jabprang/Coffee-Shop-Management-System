@@ -6,18 +6,18 @@
 
 ## 1. ทีมงานและขอบเขตความรับผิดชอบ
 
-* **นางสาวสุพิชญา สงวนโอษฐ** - หน้า Customer (ฝั่งลูกค้า)
+* **นางสาวสุพิชญา สงวนโอษฐ** - UX/UI DESIGN หน้า Customer (ฝั่งลูกค้า)
   * **รับผิดชอบ:** หน้าเมนูสินค้า, ตะกร้าสินค้า, สมัครสมาชิก / Login, หน้าติดตามสถานะออเดอร์, หน้าจัดการสต็อก
-* **นางสาวสุรีมนต์ วงศ์พระราม** - หน้า POS / Dashboard / Stock
+* **นางสาวสุรีมนต์ วงศ์พระราม** - UX/UI DESIGN หน้า POS / Dashboard / Stock
   * **รับผิดชอบ:** หน้าเพิ่ม/แก้ไขสินค้า, หน้า Dashboard, รายงานยอดขาย, หน้าจัดการสต็อก
 * **นางสาวอริชนัน ประวันจะ** - API & Authentication
-  * **รับผิดชอบ:** ระบบ Login / JWT, ระบบสิทธิ์ (Admin / Employee / Customer), เชื่อมฐานข้อมูล, CRUD สมาชิก
-* **นางสาวสุณัฐชา แก้วลา** - Order & Payment Logic
-  * **รับผิดชอบ:** ระบบสั่งซื้อ, คำนวณราคา, ตัดสต็อก, เชื่อม Payment Gateway, ระบบคืนเงิน (Refund)
+  * **รับผิดชอบ:** ระบบ Login , ระบบสิทธิ์ (Admin / Employee / Customer), เชื่อมฐานข้อมูล, CRUD สมาชิก
+* **นางสาวสุณัฐชา แก้วลา** - DESIGN DIAGRAM
+  * **รับผิดชอบ:** User flow , activity diagram, use case
 * **นายเสกสรรค์ ผคุโนภาส** - Database + Deployment
   * **รับผิดชอบ:** ออกแบบ ER Diagram, สร้างตารางฐานข้อมูล, เขียน SQL, จัดการ Hosting / Server, ตั้งค่า HTTPS, Backup Database
-* **นางสาววณิชชา จับปรั่ง** - Tester + Integrator
-  * **รับผิดชอบ:** ทดสอบระบบ (Test Case), ตรวจสอบ Error, เชื่อม Frontend กับ Backend, จัดทำ Demo / Presentation
+* **นางสาววณิชชา จับปรั่ง** - Tester
+  * **รับผิดชอบ:** ทดสอบระบบ (Test Case), ตรวจสอบ Error, จัดทำ Presentation
 
 ---
 
